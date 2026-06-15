@@ -1,0 +1,22 @@
+# Environnements virtuels
+.venv/
+env/
+__pycache__/
+
+# Données (Très important)
+data/
+*.csv
+*.parquet
+
+# Modèles et logs d'entraînement MLflow
+models/
+mlruns/
+*.joblib
+confusion_matrix.png
+
+# Fichiers d'environnement et secrets
+.env
+
+# Fichiers VS Code / OS
+.vscode/
+.DS_Store
