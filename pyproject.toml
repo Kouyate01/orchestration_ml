@@ -34,8 +34,10 @@ dev = ["pytest>=8.0", "pytest-cov", "ruff", "mypy"]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# --- MODIFICATION ICI ---
 [tool.hatch.build.targets.wheel]
-packages = ["mlproject"]
+packages = ["src"]
+# ------------------------
 
 [tool.ruff]
 line-length = 100
