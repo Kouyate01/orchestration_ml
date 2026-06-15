@@ -37,14 +37,8 @@ def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
 
 
 def train(c: float = 1.0, max_iter: int = 1000) -> dict:
+    # 1. Chargement et découpage via data.py
     df = load_data()
-    
-    # ---------------------------------------------------------
-    # FIX POUR L'EAU : On supprime les valeurs manquantes (NaN) 
-    # car le features.py du prof ne les gère pas par défaut.
-    # ---------------------------------------------------------
-    df = df.dropna()
-    
     x_train, x_test, y_train, y_test = split(df)
 
     # TODO (S5-2) : configurer l'URI de tracking et l'experience
@@ -53,6 +47,8 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
 
     # TODO (S5-3) : ouvrir un run englobant l'entrainement et l'evaluation
     with mlflow.start_run():
+        
+        # Le build_model inclut le preprocessor de features.py qui gère les NaN !
         model = build_model(c=c, max_iter=max_iter)
         model.fit(x_train, y_train)
 
