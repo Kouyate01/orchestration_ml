@@ -13,7 +13,6 @@ import mlflow
 import mlflow.sklearn
 import numpy as np
 from lightgbm import LGBMClassifier
-from mlflow.models import infer_signature
 from sklearn.base import ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
@@ -27,16 +26,12 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
 
-from src.config import (
-    MLFLOW_EXPERIMENT,
-    MLFLOW_TRACKING_URI,
-    MODEL_DIR,
-    MODEL_NAME,
-    RANDOM_STATE,
-)
+# Imports centralisés
+from src.config import MODEL_DIR, MODEL_NAME, RANDOM_STATE
 from src.data import load_data, split
 from src.evaluation import log_shap_summary
 from src.features import build_preprocessor
+from src.tracking import setup_experiment, log_dataset 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -112,15 +107,23 @@ def log_run_to_mlflow(result, x_test, y_test, cv, scoring, register_as=None) -> 
             describe_registered_version(register_as, int(model_info.registered_model_version), result, cv, scoring)
 
 def train_all(cv=5, scoring="roc_auc", use_mlflow=True):
-    df = load_data(); x_train, x_test, y_train, y_test = split(df)
-    if use_mlflow: mlflow.set_experiment(MLFLOW_EXPERIMENT)
+    if use_mlflow:
+        setup_experiment()
+        # SÉCURITÉ : Nettoyage avant de démarrer le parent
+        if mlflow.active_run():
+            mlflow.end_run()
+        
+    df = load_data()
+    x_train, x_test, y_train, y_test = split(df)
     
     results = [optimize_model(spec, x_train, y_train, x_test, y_test, cv, scoring) for spec in build_model_specs()]
     results.sort(key=lambda r: r.roc_auc, reverse=True)
     best = results[0]
 
     if use_mlflow:
+        # Run parent
         with mlflow.start_run(run_name="compare-models"):
+            log_dataset(df, context="training") # Loggé dans le run parent
             mlflow.set_tag("best_model", best.name)
             for r in results: log_run_to_mlflow(r, x_test, y_test, cv, scoring, register_as=MODEL_NAME if r is best else None)
     

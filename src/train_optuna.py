@@ -8,34 +8,24 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import joblib
-import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
+import numpy as np
 from lightgbm import LGBMClassifier
-from mlflow.models import infer_signature
 from optuna import Trial, create_study, samplers
 from sklearn.base import ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    ConfusionMatrixDisplay,
-    classification_report,
-    confusion_matrix,
-    roc_auc_score,
-)
+from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
 
-from src.config import (
-    MLFLOW_EXPERIMENT,
-    MLFLOW_TRACKING_URI,
-    MODEL_DIR,
-    MODEL_NAME,
-    RANDOM_STATE,
-)
+# Imports centralisés
+from src.config import MODEL_DIR, MODEL_NAME, RANDOM_STATE
 from src.data import load_data, split
 from src.evaluation import log_shap_summary
 from src.features import build_preprocessor
+from src.tracking import setup_experiment, log_dataset 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -88,10 +78,7 @@ def objective(trial: Trial, spec: ModelSpec, x_train, y_train, cv: int) -> float
     return float(scores.mean())
 
 def run_study(spec: ModelSpec, x_train, y_train, n_trials: int, cv: int):
-    study = create_study(
-        direction="maximize",
-        sampler=samplers.TPESampler(seed=RANDOM_STATE),
-    )
+    study = create_study(direction="maximize", sampler=samplers.TPESampler(seed=RANDOM_STATE))
     study.optimize(lambda trial: objective(trial, spec, x_train, y_train, cv), n_trials=n_trials)
     return study
 
@@ -113,10 +100,7 @@ def optimize_family(spec, x_train, y_train, x_test, y_test, n_trials, cv) -> Fam
 
 def describe_registered_version(name: str, version: int, result: FamilyResult, n_trials: int, cv: int) -> None:
     client = mlflow.MlflowClient()
-    description = (
-        f"Modele {result.spec.name} optimise par Optuna (n_trials={n_trials}, cv={cv}).\n"
-        f"ROC AUC: {result.test_roc_auc:.3f}"
-    )
+    description = f"Modele {result.spec.name} optimise par Optuna (n_trials={n_trials}, cv={cv}).\nROC AUC: {result.test_roc_auc:.3f}"
     client.update_model_version(name=name, version=str(version), description=description)
     tags = {"model_family": result.spec.name, "cv_roc_auc": f"{result.study.best_value:.4f}", "test_roc_auc": f"{result.test_roc_auc:.4f}"}
     for k, v in tags.items(): client.set_model_version_tag(name=name, version=str(version), key=k, value=v)
@@ -137,18 +121,21 @@ def log_family_to_mlflow(result, x_test, y_test, n_trials, cv, register_as=None)
             describe_registered_version(register_as, int(model_info.registered_model_version), result, n_trials, cv)
 
 def optimize(n_trials=30, cv=5, use_mlflow=True) -> list[FamilyResult]:
+    if use_mlflow:
+        setup_experiment()
+        if mlflow.active_run(): mlflow.end_run()
+        
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
-    if use_mlflow:
-        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-        mlflow.set_experiment(MLFLOW_EXPERIMENT)
     
     results = [optimize_family(spec, x_train, y_train, x_test, y_test, n_trials, cv) for spec in build_model_specs()]
     results.sort(key=lambda r: r.test_roc_auc, reverse=True)
     best = results[0]
 
     if use_mlflow:
+        if mlflow.active_run(): mlflow.end_run()
         with mlflow.start_run(run_name="optuna-compare"):
+            log_dataset(df, context="training")
             for result in results:
                 log_family_to_mlflow(result, x_test, y_test, n_trials, cv, register_as=MODEL_NAME if result is best else None)
     
