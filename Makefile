@@ -72,3 +72,6 @@ lint: ## Vérifie le style du code (ruff)
 
 format: ## Formate le code (ruff)
 	$(RUN) ruff format src
+
+predict-client: ## Lance le client de test pour l'API
+	PYTHONPATH=. $(PYTHON) scripts/predict_client.py
