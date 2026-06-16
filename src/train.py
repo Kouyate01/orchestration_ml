@@ -1,4 +1,5 @@
 """Entrainement du modele de classification (baseline)."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,10 +15,11 @@ from sklearn.pipeline import Pipeline
 from src.config import MODEL_DIR
 from src.data import load_data, split
 from src.features import build_preprocessor
-from src.tracking import setup_experiment, log_dataset 
+from src.tracking import setup_experiment, log_dataset
 
 import mlflow
 import mlflow.sklearn
+
 
 def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
     return Pipeline(
@@ -27,14 +29,15 @@ def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
         ]
     )
 
+
 def train(c: float = 1.0, max_iter: int = 1000) -> dict:
     # 1. Configuration centralisée
     setup_experiment()
-    
+
     # SÉCURITÉ : Fermer tout run zombie avant de commencer
     if mlflow.active_run():
         mlflow.end_run()
-    
+
     # 2. Chargement des données
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
@@ -42,8 +45,8 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
     # 3. Entraînement avec suivi MLflow
     # Le run doit être ouvert AVANT d'appeler log_dataset
     with mlflow.start_run():
-        log_dataset(df, context="training") # Maintenant dans le run actif
-        
+        log_dataset(df, context="training")  # Maintenant dans le run actif
+
         model = build_model(c=c, max_iter=max_iter)
         model.fit(x_train, y_train)
 
@@ -59,7 +62,7 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
         mlflow.log_params({"C": c, "max_iter": max_iter})
         mlflow.log_metrics(metrics)
         mlflow.sklearn.log_model(model, "logistic_regression_model")
-        
+
         # Sauvegarde de la matrice de confusion
         fig, ax = plt.subplots()
         ConfusionMatrixDisplay.from_predictions(y_test, preds, ax=ax, cmap="Blues")
@@ -68,8 +71,9 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
 
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
         joblib.dump(model, MODEL_DIR / "model.joblib")
-        
+
     return metrics
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -77,6 +81,7 @@ def main() -> None:
     parser.add_argument("--max-iter", type=int, default=1000)
     args = parser.parse_args()
     train(c=args.c, max_iter=args.max_iter)
+
 
 if __name__ == "__main__":
     main()

@@ -3,6 +3,7 @@
 Lancement (depuis la racine du projet) :
     PYTHONPATH=. python scripts/predict_client.py
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,34 +22,34 @@ logger = logging.getLogger(__name__)
 # Nombre de clients de test envoyés à l'API.
 N_SAMPLES = 3
 
+
 def build_payloads(n: int = N_SAMPLES) -> list[dict]:
     """Construire n payloads de test à partir du jeu de données (sans valeurs manquantes)."""
     df = load_data()
-    
+
     # On s'assure de ne pas avoir la target dans les features
     if TARGET in df.columns:
         features = df.drop(columns=[TARGET])
     else:
         features = df
-        
+
     # Nettoyage : on supprime les lignes avec des valeurs manquantes (NaN)
     # pour garantir que le payload envoyé à l'API est valide.
     features_clean = features.dropna()
-    
+
     # On échantillonne uniquement parmi les lignes propres
     if len(features_clean) < n:
         logger.warning("Pas assez de lignes propres, réduction du nombre d'échantillons.")
         n = len(features_clean)
-        
+
     sample = features_clean.sample(n=n)
     return [json.loads(row.to_json()) for _, row in sample.iterrows()]
+
 
 def main() -> None:
     """Point d'entrée en ligne de commande."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--url", default="http://127.0.0.1:8000", help="URL de base de l'API"
-    )
+    parser.add_argument("--url", default="http://127.0.0.1:8000", help="URL de base de l'API")
     args = parser.parse_args()
 
     payloads = build_payloads()
@@ -66,9 +67,10 @@ def main() -> None:
         for i, payload in enumerate(payloads):
             response = client.post("/predict", json=payload)
             logger.info("POST /predict (#%d) -> %s %s", i, response.status_code, response.json())
-        
+
         info = client.get("/model-info")
         logger.info("GET /model-info -> %s %s", info.status_code, info.json())
+
 
 if __name__ == "__main__":
     main()

@@ -27,7 +27,7 @@ RESET  := $(shell printf '\033[0m')
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install train train-models train-optuna evaluate mlflow-ui mlflow-run lint format mlflow-local mlflow-down
+.PHONY: help install train train-models train-optuna evaluate mlflow-ui mlflow-run lint format mlflow-local mlflow-down api predict-client
 
 help: ## Liste des commandes disponibles
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "$(YELLOW)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -67,11 +67,14 @@ mlflow-run: ## Lance un entry point MLproject
 mlflow-down: ## Arrête le serveur MLflow
 	docker compose down
 
-lint: ## Vérifie le style du code (ruff)
-	$(RUN) ruff check src
-
-format: ## Formate le code (ruff)
-	$(RUN) ruff format src
+api: ## Lance l'API FastAPI (développement)
+	$(PYTHON) -m uvicorn src.api:app --reload
 
 predict-client: ## Lance le client de test pour l'API
 	PYTHONPATH=. $(PYTHON) scripts/predict_client.py
+
+lint: ## Vérifie le style du code (ruff) sur src et scripts
+	$(RUN) ruff check src scripts
+
+format: ## Formate le code (ruff) sur src et scripts
+	$(RUN) ruff format src scripts

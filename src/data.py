@@ -1,10 +1,12 @@
 """Chargement et decoupage des donnees."""
+
 from __future__ import annotations
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.config import DATA_PATH, RANDOM_STATE, TARGET
+
 
 def load_data(path=DATA_PATH) -> pd.DataFrame:
     return pd.read_csv(path)
