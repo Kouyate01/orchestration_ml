@@ -11,6 +11,7 @@ data/
 # Modèles et logs d'entraînement MLflow
 models/
 mlruns/
+mlartifacts/
 *.joblib
 confusion_matrix.png
 
