@@ -13,6 +13,8 @@ load_dotenv(ROOT / ".env")
 # Chemins
 DATA_PATH = ROOT / "data" / "water_potability.csv"
 MODEL_DIR = ROOT / "models"
+# Ajout des chemins pour les artefacts MLflow
+MLFLOW_ARTIFACTS_DIR = ROOT / "mlartifacts"
 
 # Cible et features
 TARGET = "Potability"
@@ -37,6 +39,6 @@ MLFLOW_EXPERIMENT_TAGS = {
     "version": "1.0"
 }
 
-# Seuils pour la porte qualité (S11)
-EVAL_F1_MIN = 0.40      # Ajuste selon tes performances réelles
-EVAL_ROC_AUC_MIN = 0.55 # Ajuste selon tes performances réelles
+# Seuils pour la porte qualité
+EVAL_F1_MIN = 0.40 
+EVAL_ROC_AUC_MIN = 0.55
