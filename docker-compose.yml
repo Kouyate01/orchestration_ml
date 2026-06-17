@@ -1,0 +1,63 @@
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.13.0
+    command: >
+      mlflow server
+      --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+      --allowed-hosts "*"
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+
+  train:
+    build:
+      context: .
+      dockerfile: todo/docker/Dockerfile.train
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    depends_on:
+      - mlflow
+    volumes:
+      - models_data:/app/models
+    profiles:
+      - train
+
+  api:
+    build:
+      context: .
+      dockerfile: todo/docker/Dockerfile.api
+    # S14-1 : Mapping des ports
+    ports:
+      - "8000:8000"
+    # S14-2 : Volume partagé en lecture seule
+    volumes:
+      - models_data:/app/models:ro
+    # S14-3 : Healthcheck
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: .
+      dockerfile: todo/docker/Dockerfile.frontend
+    # S14-4 : URL de l'API
+    environment:
+      API_URL: http://api:8000
+    # S14-5 : Mapping des ports
+    ports:
+      - "8501:8501"
+    # S14-6 : Dépendance avec condition
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  mlflow_data:
+  models_data:
