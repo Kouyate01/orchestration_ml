@@ -5,15 +5,13 @@ WORKDIR /app
 
 # Copie des fichiers de configuration et installation des dépendances
 COPY pyproject.toml uv.lock ./
+# Installation des dépendances (assurez-vous que votre projet est installable)
 RUN pip install --no-cache-dir .
 
-# CORRECTION : Copie de votre code source
-# Si votre code Streamlit est dans src/frontend ou src/app.py, ajustez ici.
-# Je suppose ici que votre code frontend se trouve dans src/
-COPY src/ ./src/
+# CORRECTION : Copie du dossier frontend contenant votre application
+COPY frontend/ ./frontend/
 
 EXPOSE 8501
 
-# CORRECTION : Lancement du script streamlit
-# Adaptez "src/app.py" selon le chemin réel de votre fichier principal Streamlit
-CMD ["streamlit", "run", "src/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
+# CORRECTION : Lancement du script streamlit pointant vers frontend/app.py
+CMD ["streamlit", "run", "frontend/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]

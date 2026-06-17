@@ -1,4 +1,5 @@
 """Frontend Streamlit pour tester l'API de classification (Water Potability)."""
+
 from __future__ import annotations
 import os
 import httpx

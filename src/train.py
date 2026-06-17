@@ -20,6 +20,7 @@ from src.tracking import setup_experiment, log_dataset
 import mlflow
 import mlflow.sklearn
 
+
 def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
     return Pipeline(
         steps=[
@@ -27,6 +28,7 @@ def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
             ("clf", LogisticRegression(C=c, max_iter=max_iter)),
         ]
     )
+
 
 def train(c: float = 1.0, max_iter: int = 1000) -> dict:
     setup_experiment()
@@ -58,7 +60,7 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
         model_path = MODEL_DIR / "model.joblib"
         joblib.dump(model, model_path)
-        
+
         # On logue le fichier .joblib comme un artefact simple
         mlflow.log_artifact(str(model_path), artifact_path="models")
 
@@ -70,12 +72,14 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
 
     return metrics
 
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--c", type=float, default=1.0)
     parser.add_argument("--max-iter", type=int, default=1000)
     args = parser.parse_args()
     train(c=args.c, max_iter=args.max_iter)
+
 
 if __name__ == "__main__":
     main()

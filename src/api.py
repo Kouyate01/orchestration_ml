@@ -23,10 +23,14 @@ ml: dict = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Chargement du modele au demarrage."""
+    """Chargement du modele au demarrage et verification des colonnes attendues."""
     model_path = MODEL_DIR / "model.joblib"
     try:
-        ml["model"] = joblib.load(model_path)
+        model = joblib.load(model_path)
+        ml["model"] = model
+        # Log des colonnes attendues pour faciliter le debug
+        if hasattr(model, "feature_names_in_"):
+            logger.info(f"Modele charge. Colonnes attendues : {model.feature_names_in_}")
         logger.info(f"Modele charge depuis {model_path}")
     except Exception as e:
         logger.error(f"Erreur lors du chargement du modele : {e}")
@@ -38,33 +42,15 @@ app = FastAPI(title="Water Potability API", version="0.1.0", lifespan=lifespan)
 
 
 class Features(BaseModel):
-    ph: float = Field(..., description="pH de l'eau")
-    Hardness: float = Field(..., description="Durete de l'eau")
-    Solids: float = Field(..., description="Solides dissous totaux")
-    Chloramines: float = Field(..., description="Concentration en chloramines")
-    Sulfate: float = Field(..., description="Concentration en sulfates")
-    Conductivity: float = Field(..., description="Conductivite")
-    Organic_carbon: float = Field(..., description="Carbone organique")
-    Trihalomethanes: float = Field(..., description="Trihalomethanes")
-    Turbidity: float = Field(..., description="Turbidite")
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "ph": 7.08,
-                    "Hardness": 204.89,
-                    "Solids": 20791.3,
-                    "Chloramines": 7.3,
-                    "Sulfate": 368.5,
-                    "Conductivity": 564.3,
-                    "Organic_carbon": 10.38,
-                    "Trihalomethanes": 86.99,
-                    "Turbidity": 2.96,
-                }
-            ]
-        }
-    }
+    ph: float
+    Hardness: float
+    Solids: float
+    Chloramines: float
+    Sulfate: float
+    Conductivity: float
+    Organic_carbon: float
+    Trihalomethanes: float
+    Turbidity: float
 
 
 class PredictionOut(BaseModel):
@@ -83,12 +69,26 @@ def predict(features: Features) -> PredictionOut:
     if model is None:
         raise HTTPException(status_code=503, detail="Modele non charge")
 
-    # Transformation des donnees d'entree en DataFrame
-    row = pd.DataFrame([features.model_dump()])
+    # 1. Conversion en DataFrame
+    data_dict = features.model_dump()
+    row = pd.DataFrame([data_dict])
 
-    # Prediction
-    proba = float(model.predict_proba(row)[0, 1])
-    return PredictionOut(prediction=int(proba >= 0.5), probability=round(proba, 4))
+    # 2. ALIGNEMENT DES COLONNES (Correction cruciale)
+    if hasattr(model, "feature_names_in_"):
+        try:
+            # Réordonne et sélectionne les colonnes selon ce que le modèle attend
+            row = row[model.feature_names_in_]
+        except KeyError as e:
+            logger.error(f"Colonnes manquantes dans la requete : {e}")
+            raise HTTPException(status_code=400, detail=f"Colonnes manquantes: {e}")
+
+    # 3. Prediction
+    try:
+        proba = float(model.predict_proba(row)[0, 1])
+        return PredictionOut(prediction=int(proba >= 0.5), probability=round(proba, 4))
+    except Exception as e:
+        logger.error(f"Erreur de prédiction : {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/model-info")
