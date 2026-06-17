@@ -1,0 +1,19 @@
+# Image du frontend Streamlit
+FROM python:3.13-slim
+ENV PYTHONUNBUFFERED=1
+WORKDIR /app
+
+# Copie des fichiers de configuration et installation des dépendances
+COPY pyproject.toml uv.lock ./
+RUN pip install --no-cache-dir .
+
+# CORRECTION : Copie de votre code source
+# Si votre code Streamlit est dans src/frontend ou src/app.py, ajustez ici.
+# Je suppose ici que votre code frontend se trouve dans src/
+COPY src/ ./src/
+
+EXPOSE 8501
+
+# CORRECTION : Lancement du script streamlit
+# Adaptez "src/app.py" selon le chemin réel de votre fichier principal Streamlit
+CMD ["streamlit", "run", "src/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]

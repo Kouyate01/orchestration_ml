@@ -1,0 +1,21 @@
+# S8-1 : Image de base Python 3.13 slim
+FROM python:3.13-slim
+
+# S8-2 : Variables d'environnement et dossier de travail
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app
+WORKDIR /app
+
+# libgomp1 : runtime OpenMP requis pour LightGBM
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# S8-3 : Installation des dépendances (cache efficace)
+COPY pyproject.toml uv.lock ./
+RUN pip install --no-cache-dir .
+
+# S8-4 : Copie du code source (votre package dans src/)
+COPY src/ ./src/
+
+# S8-5 : Préparation des données (optionnel ici) et commande d'entraînement
+# Assurez-vous que votre module d'entraînement est bien dans src/train.py
+CMD ["python", "-m", "src.train"]

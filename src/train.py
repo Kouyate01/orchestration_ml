@@ -20,7 +20,6 @@ from src.tracking import setup_experiment, log_dataset
 import mlflow
 import mlflow.sklearn
 
-
 def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
     return Pipeline(
         steps=[
@@ -29,23 +28,17 @@ def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
         ]
     )
 
-
 def train(c: float = 1.0, max_iter: int = 1000) -> dict:
-    # 1. Configuration centralisée
     setup_experiment()
 
-    # SÉCURITÉ : Fermer tout run zombie avant de commencer
     if mlflow.active_run():
         mlflow.end_run()
 
-    # 2. Chargement des données
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
 
-    # 3. Entraînement avec suivi MLflow
-    # Le run doit être ouvert AVANT d'appeler log_dataset
     with mlflow.start_run():
-        log_dataset(df, context="training")  # Maintenant dans le run actif
+        log_dataset(df, context="training")
 
         model = build_model(c=c, max_iter=max_iter)
         model.fit(x_train, y_train)
@@ -58,10 +51,16 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
         }
         print(f"f1={metrics['f1']:.3f}  roc_auc={metrics['roc_auc']:.3f}")
 
-        # Logging MLflow
         mlflow.log_params({"C": c, "max_iter": max_iter})
         mlflow.log_metrics(metrics)
-        mlflow.sklearn.log_model(model, "logistic_regression_model")
+
+        # CORRECTION : Sauvegarde manuelle pour éviter les erreurs de typage skops/YAML
+        MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        model_path = MODEL_DIR / "model.joblib"
+        joblib.dump(model, model_path)
+        
+        # On logue le fichier .joblib comme un artefact simple
+        mlflow.log_artifact(str(model_path), artifact_path="models")
 
         # Sauvegarde de la matrice de confusion
         fig, ax = plt.subplots()
@@ -69,11 +68,7 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
         mlflow.log_figure(fig, "confusion_matrix.png")
         plt.close(fig)
 
-        MODEL_DIR.mkdir(parents=True, exist_ok=True)
-        joblib.dump(model, MODEL_DIR / "model.joblib")
-
     return metrics
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -81,7 +76,6 @@ def main() -> None:
     parser.add_argument("--max-iter", type=int, default=1000)
     args = parser.parse_args()
     train(c=args.c, max_iter=args.max_iter)
-
 
 if __name__ == "__main__":
     main()
