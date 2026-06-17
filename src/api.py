@@ -10,7 +10,7 @@ from typing import AsyncIterator
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 # Import depuis votre configuration
 from src.config import MODEL_DIR
