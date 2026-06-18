@@ -23,7 +23,8 @@ def build_model(c=1.0, max_iter=1000):
 def train(c=1.0, max_iter=1000):
     setup_experiment()
     os.makedirs(PLOTS_DIR, exist_ok=True)
-    if mlflow.active_run(): mlflow.end_run()
+    if mlflow.active_run():
+        mlflow.end_run()
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
     with mlflow.start_run():

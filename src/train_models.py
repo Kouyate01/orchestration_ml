@@ -48,7 +48,13 @@ def build_pipeline(estimator: ClassifierMixin) -> Pipeline:
 
 @dataclass
 class FitResult:
-    name: str; best_estimator: Pipeline; best_params: dict; cv_score: float; f1: float; roc_auc: float; preds: np.ndarray
+    name: str
+    best_estimator: Pipeline
+    best_params: dict
+    cv_score: float
+    f1: float
+    roc_auc: float
+    preds: np.ndarray
 
 def optimize_model(spec, x_train, y_train, x_test, y_test, cv=5, scoring="roc_auc") -> FitResult:
     search = GridSearchCV(build_pipeline(spec.estimator), spec.param_grid, cv=cv, scoring=scoring, n_jobs=-1, refit=True)
@@ -100,7 +106,8 @@ def log_run_to_mlflow(result, x_test, y_test, cv, scoring, register_as=None, is_
 def train_all(cv=5, scoring="roc_auc", use_mlflow=True):
     if use_mlflow:
         setup_experiment()
-        if mlflow.active_run(): mlflow.end_run()
+        if mlflow.active_run():
+        mlflow.end_run()
 
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)

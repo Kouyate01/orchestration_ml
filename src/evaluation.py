@@ -24,11 +24,11 @@ def log_shap_summary(pipeline: Pipeline, x_test, name: str, max_samples: int = 2
     try:
         explainer = shap.LinearExplainer(clf, sample)
         shap_values = explainer.shap_values(sample)
-    except Exception as e:
+    except Exception:
         try:
             explainer = shap.Explainer(clf, sample)
             shap_values = explainer(sample).values
-        except Exception as e2:
+        except Exception:
             logger.warning("SHAP indisponible pour %s", name)
             return
 
