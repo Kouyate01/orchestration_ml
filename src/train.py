@@ -1,4 +1,5 @@
 """Entrainement du modele de classification (baseline)."""
+
 from __future__ import annotations
 import argparse
 import os
@@ -17,8 +18,15 @@ import mlflow.sklearn
 
 PLOTS_DIR = "/app/data/plots"
 
+
 def build_model(c=1.0, max_iter=1000):
-    return Pipeline(steps=[("preprocessor", build_preprocessor()), ("clf", LogisticRegression(C=c, max_iter=max_iter))])
+    return Pipeline(
+        steps=[
+            ("preprocessor", build_preprocessor()),
+            ("clf", LogisticRegression(C=c, max_iter=max_iter)),
+        ]
+    )
+
 
 def train(c=1.0, max_iter=1000):
     setup_experiment()
@@ -33,7 +41,10 @@ def train(c=1.0, max_iter=1000):
         model.fit(x_train, y_train)
         proba = model.predict_proba(x_test)[:, 1]
         preds = (proba >= 0.5).astype(int)
-        metrics = {"f1": float(f1_score(y_test, preds)), "roc_auc": float(roc_auc_score(y_test, proba))}
+        metrics = {
+            "f1": float(f1_score(y_test, preds)),
+            "roc_auc": float(roc_auc_score(y_test, proba)),
+        }
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
         joblib.dump(model, MODEL_DIR / "model.joblib")
         fig1, ax1 = plt.subplots()
@@ -45,6 +56,7 @@ def train(c=1.0, max_iter=1000):
         fig2.savefig(os.path.join(PLOTS_DIR, "roc_curve.png"))
         plt.close(fig2)
     return metrics
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

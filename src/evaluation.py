@@ -1,4 +1,5 @@
 """Outils d'evaluation partages : graphiques loggues comme artefacts MLflow."""
+
 from __future__ import annotations
 import logging
 import os
@@ -11,7 +12,10 @@ from sklearn.pipeline import Pipeline
 logger = logging.getLogger(__name__)
 PLOTS_DIR = "/app/data/plots"
 
-def log_shap_summary(pipeline: Pipeline, x_test, name: str, max_samples: int = 200, is_best: bool = False) -> None:
+
+def log_shap_summary(
+    pipeline: Pipeline, x_test, name: str, max_samples: int = 200, is_best: bool = False
+) -> None:
     preprocessor = pipeline.named_steps["preprocessor"]
     clf = pipeline.named_steps["clf"]
 
@@ -41,10 +45,10 @@ def log_shap_summary(pipeline: Pipeline, x_test, name: str, max_samples: int = 2
     shap.summary_plot(shap_values, sample, feature_names=feature_names, show=False)
     fig = plt.gcf()
     fig.suptitle(f"Importance des variables (SHAP) : {name}")
-    
+
     if is_best:
         os.makedirs(PLOTS_DIR, exist_ok=True)
-        fig.savefig(os.path.join(PLOTS_DIR, "shap_summary.png"), bbox_inches='tight')
-        
+        fig.savefig(os.path.join(PLOTS_DIR, "shap_summary.png"), bbox_inches="tight")
+
     mlflow.log_figure(fig, f"shap_summary_{name}.png")
     plt.close(fig)
