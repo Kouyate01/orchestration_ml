@@ -83,7 +83,8 @@ def log_family_to_mlflow(result, x_test, y_test, n_trials, cv, register_as=None,
 def optimize(n_trials=10, cv=3, use_mlflow=True):
     if use_mlflow:
         setup_experiment()
-        if mlflow.active_run(): mlflow.end_run()
+        if mlflow.active_run():
+            mlflow.end_run()
 
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
@@ -93,7 +94,8 @@ def optimize(n_trials=10, cv=3, use_mlflow=True):
     best = results[0]
 
     if use_mlflow:
-        if mlflow.active_run(): mlflow.end_run()
+        if mlflow.active_run():
+            mlflow.end_run()
             
         with mlflow.start_run(run_name="optuna-compare"):
             log_dataset(df, context="training")
