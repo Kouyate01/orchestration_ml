@@ -2,9 +2,10 @@ import streamlit as st
 import httpx
 import os
 
+# Configuration de la page
 st.set_page_config(page_title="Projet MLOps - KOUYATE MOHAMED ALI", layout="wide")
 
-# --- STYLE ---
+# --- STYLE CSS PERSONNALISÉ ---
 st.markdown("""
     <style>
     .name-box { background-color: #f0f2f6; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #1E88E5; margin-bottom: 20px; }
@@ -12,14 +13,22 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- ENTÊTE ---
 st.markdown('<div class="name-box"><p class="author-name">KOUYATE MOHAMED ALI</p></div>', unsafe_allow_html=True)
 st.title("💧 Projet MLOps : Prédiction de la Potabilité")
 
+# --- README ---
 with st.expander("📝 README : Description du Projet", expanded=False):
-    st.markdown("""Projet d'orchestration MLOps pour la prédiction de la qualité de l'eau.""")
+    st.markdown("""
+    Projet d'orchestration MLOps pour la prédiction de la qualité de l'eau.
+    - **Cible** : Potable (1) / Non Potable (0).
+    - **Stack** : MLflow, FastAPI, Streamlit, Docker.
+    """)
 
+# --- NAVIGATION ---
 tab1, tab2, tab3, tab4 = st.tabs(["🚀 Prédiction", "📈 Évaluation", "📊 Monitoring", "🔗 Liens"])
 
+# 1. Onglet PREDICTION
 with tab1:
     st.header("Entrez les paramètres chimiques")
     api_url = os.environ.get("API_URL", "http://api:8000")
@@ -42,11 +51,9 @@ with tab1:
         submitted = st.form_submit_button("Prédire la potabilité")
 
     if submitted:
-        payload = {
-            "ph": ph, "Hardness": hardness, "Solids": solids, "Chloramines": chloramines, 
-            "Sulfate": sulfate, "Conductivity": conductivity, "Organic_carbon": organic_carbon, 
-            "Trihalomethanes": trihalomethanes, "Turbidity": turbidity
-        }
+        payload = {"ph": ph, "Hardness": hardness, "Solids": solids, "Chloramines": chloramines, 
+                   "Sulfate": sulfate, "Conductivity": conductivity, "Organic_carbon": organic_carbon, 
+                   "Trihalomethanes": trihalomethanes, "Turbidity": turbidity}
         try:
             response = httpx.post(f"{api_url}/predict", json=payload, timeout=10.0)
             result = response.json()
@@ -55,37 +62,22 @@ with tab1:
         except Exception as e:
             st.error(f"Erreur API : {e}")
 
+# 2. Onglet ÉVALUATION
 with tab2:
-    st.header("Évaluation du Modèle")
-    plots_dir = "/app/data/plots"
-    cm_path = os.path.join(plots_dir, "confusion_matrix.png")
-    shap_path = os.path.join(plots_dir, "shap_summary.png")
-    roc_path = os.path.join(plots_dir, "roc_curve.png")
-    
-    # On vérifie si au moins un graphique existe dans le dossier partagé
-    if os.path.exists(cm_path) or os.path.exists(shap_path) or os.path.exists(roc_path):
-        
-        # Ligne pour Matrice et Courbe ROC
-        col1, col2 = st.columns(2)
-        with col1:
-            if os.path.exists(cm_path):
-                st.subheader("Matrice de Confusion")
-                st.image(cm_path, use_container_width=True)
-        with col2:
-            if os.path.exists(roc_path):
-                st.subheader("Courbe ROC")
-                st.image(roc_path, use_container_width=True)
-                
-        # Ligne pour SHAP en dessous
-        if os.path.exists(shap_path):
-            st.subheader("Interprétabilité du modèle (SHAP)")
-            st.markdown("Ce graphique montre l'impact de chaque paramètre chimique sur la décision de l'IA (Les points rouges indiquent une valeur élevée pour le paramètre).")
-            st.image(shap_path, use_container_width=True)
-    else:
-        st.info("Évaluation en attente... Lancez l'entraînement pour générer les graphiques.")
+    st.header("📈 Performance du modèle")
+    st.write("Visualisation des métriques d'entraînement...")
 
+# 3. Onglet MONITORING
 with tab3:
-    st.components.v1.iframe("http://88.96.55.189:5001", height=800, scrolling=True)
+    st.header("📊 Monitoring & Expériences")
+    st.components.v1.iframe("http://88.96.55.189:5000", height=800, scrolling=True)
 
+# 4. Onglet LIENS
 with tab4:
-    st.markdown("- 🧪 [MLflow](http://88.96.55.189:5001)\n- ⚡ [API](http://88.96.55.189:8000/docs)\n- ✈️ [Airflow](http://88.96.55.189:8080)\n- 📂 [GitHub](https://github.com/Kouyate01/orchestration_ml.git)")
+    st.header("🔗 Ressources du Projet")
+    st.markdown("""
+    - 🧪 **[MLflow Dashboard](http://88.96.55.189:5000)**
+    - ⚡ **[Documentation API FastAPI](http://88.96.55.189:8000/docs)**
+    - ✈️ **[Airflow UI](http://88.96.55.189:8080)**
+    - 📂 **[Dépôt GitHub](https://github.com/Kouyate01/orchestration_ml.git)**
+    """)
