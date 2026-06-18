@@ -32,7 +32,9 @@ PLOTS_DIR = "/app/data/plots"
 
 @dataclass
 class ModelSpec:
-    name: str; suggest_params: Callable[[Trial], dict]; build_estimator: Callable[[dict], ClassifierMixin]
+    name: str
+    suggest_params: Callable[[Trial], dict]
+    build_estimator: Callable[[dict], ClassifierMixin]
 
 def build_model_specs() -> list[ModelSpec]:
     return [
@@ -53,7 +55,11 @@ def run_study(spec: ModelSpec, x_train, y_train, n_trials: int, cv: int):
 
 @dataclass
 class FamilyResult:
-    spec: ModelSpec; study: Any; best_pipeline: Pipeline; test_roc_auc: float; preds: np.ndarray
+    spec: ModelSpec
+    study: Any
+    best_pipeline: Pipeline
+    test_roc_auc: float
+    preds: np.ndarray
 
 def optimize_family(spec, x_train, y_train, x_test, y_test, n_trials, cv) -> FamilyResult:
     study = run_study(spec, x_train, y_train, n_trials=n_trials, cv=cv)
