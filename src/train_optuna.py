@@ -11,10 +11,8 @@ import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
 import numpy as np
-from lightgbm import LGBMClassifier
 from optuna import Trial, create_study, samplers
 from sklearn.base import ClassifierMixin
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
