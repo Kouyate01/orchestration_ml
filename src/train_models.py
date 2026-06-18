@@ -85,7 +85,6 @@ def log_run_to_mlflow(result, x_test, y_test, cv, scoring, register_as=None, is_
         log_shap_summary(result.best_estimator, x_test, result.name, is_best=is_best)
 
         try:
-            # LA VRAIE CORRECTION EST ICI : on dit à skops à qui on fait confiance
             trusted = [
                 "collections.OrderedDict", 
                 "lightgbm.basic.Booster", 
@@ -107,7 +106,7 @@ def train_all(cv=5, scoring="roc_auc", use_mlflow=True):
     if use_mlflow:
         setup_experiment()
         if mlflow.active_run():
-        mlflow.end_run()
+            mlflow.end_run()
 
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
