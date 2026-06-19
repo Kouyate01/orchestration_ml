@@ -10,7 +10,7 @@ import shap
 from sklearn.pipeline import Pipeline
 
 logger = logging.getLogger(__name__)
-PLOTS_DIR = "/app/data/plots"
+PLOTS_DIR = "/opt/airflow/data/plots"
 
 
 def log_shap_summary(

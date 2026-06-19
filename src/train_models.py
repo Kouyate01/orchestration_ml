@@ -31,7 +31,7 @@ warnings.filterwarnings(
     "ignore", message="X does not have valid feature names", category=UserWarning
 )
 
-PLOTS_DIR = "/app/data/plots"
+PLOTS_DIR = "/opt/airflow/data/plots"
 
 
 @dataclass

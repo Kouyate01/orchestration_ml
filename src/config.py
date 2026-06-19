@@ -48,3 +48,6 @@ MLFLOW_EXPERIMENT_TAGS = {"project_name": "mlops-water", "team": "data-science",
 # Seuils pour la porte qualité
 EVAL_F1_MIN = 0.40
 EVAL_ROC_AUC_MIN = 0.55
+
+# URL de l API pour le DAG de prédiction
+API_URL = "http://api:8000"

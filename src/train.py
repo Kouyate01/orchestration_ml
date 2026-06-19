@@ -16,7 +16,7 @@ from src.tracking import setup_experiment, log_dataset
 import mlflow
 import mlflow.sklearn
 
-PLOTS_DIR = "/app/data/plots"
+PLOTS_DIR = "/opt/airflow/data/plots"
 
 
 def build_model(c=1.0, max_iter=1000):

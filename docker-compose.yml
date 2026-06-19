@@ -52,10 +52,46 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      - shared_data:/app/data/plots:ro
+      - shared_data:/app/data/plots
     depends_on:
       api:
         condition: service_healthy
+
+  airflow-webserver:
+    image: apache/airflow:2.7.1
+    command: ["bash", "-c", "airflow db init && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin || true && airflow webserver"]
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/dags/airflow.db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - _PIP_ADDITIONAL_REQUIREMENTS=pandas scikit-learn mlflow httpx protobuf==4.21.12
+      - AIRFLOW__WEBSERVER__SECRET_KEY=VrV4lzsMqNmuF_cmQee-5D7dbk3lAXlmyTL-9TbTnLc=
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - ./models:/opt/airflow/models
+
+  airflow-scheduler:
+    image: apache/airflow:2.7.1
+    command: ["bash", "-c", "sleep 15 && airflow scheduler"]
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/dags/airflow.db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - _PIP_ADDITIONAL_REQUIREMENTS=pandas scikit-learn mlflow httpx protobuf==4.21.12
+      - AIRFLOW__WEBSERVER__SECRET_KEY=VrV4lzsMqNmuF_cmQee-5D7dbk3lAXlmyTL-9TbTnLc=
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - ./models:/opt/airflow/models
+    depends_on:
+      - airflow-webserver
 
 volumes:
   mlflow_data:
